@@ -3,6 +3,7 @@
 module Data.Aviation.Casa.AbbreviationsAndAcronyms where
 
 import Text.Parsec
+import Data.List
 
 parseNoTab ::
   Stream s m Char =>
@@ -21,7 +22,7 @@ data Source =
   | CASR1998
   | CASRPart String
   | FAR
-  | ICAO
+  | ICAO (Maybe String)
   | JAA
   | OBPR
   | ORR
@@ -43,7 +44,7 @@ parseSource =
   try (CASR1998 <$ string "CASR 1998") <|>
   try (CASRPart <$> (string "CASR Part " *> many1 (noneOf "\n/"))) <|>
   try (FAR <$ string "FAR") <|>
-  try (ICAO <$ string "ICAO") <|>
+  try (ICAO <$> (string "ICAO" *> optionMaybe (char ' ' *> many1 (noneOf "\n/")))) <|>
   try (JAA <$ string "JAA") <|>
   try (OBPR <$ string "OBPR") <|>
   try (ORR <$ string "ORR") <|>
@@ -89,3 +90,14 @@ parseAcronyms ::
   ParsecT s u m Acronyms
 parseAcronyms =  
   Acronyms <$> sepBy parseAcronym (char '\n')
+
+prettyAcronyms ::
+  Acronyms
+  -> String
+prettyAcronyms (Acronyms a) =
+  intercalate "\n, " (show <$> a)
+
+q s x = 
+  case parse (prettyAcronyms <$> parseAcronyms) s x of
+    Left e -> show e
+    Right a -> a
