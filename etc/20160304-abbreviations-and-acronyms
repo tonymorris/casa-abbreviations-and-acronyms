@@ -97,7 +97,7 @@ ALA/HLS	Aircraft Landing Area/Helicopter Landing Site
 ALAEA	Australian Licensed Aircraft Engineers Association	
 ALARP	As Low as Reasonably Practical	AIS
 ALERFA	Alert phase	AIS
-ALI	Airworthiness Limitation Item 
+ALI	Airworthiness Limitation Item	
 ALM	Aircraft Landing Minima	AIS
 ALR	Alerting Message	AIS
 ALRS	Approach lighting system	ICAO
@@ -297,7 +297,7 @@ CIDIN	Common ICAO data interchange network	ICAO
 CIR	Command Instrument Rating	CAR 1988
 CIT	Near, Over Large Town(s)	AIS
 CIV	Civil	AIS
-CK	Check	AIS 
+CK	Check	AIS
 CL	Centre Line	AIS
 CLA	Clear type of ice formation	AIS
 CLBR	Calibration	AIS
@@ -397,7 +397,7 @@ DISP	Displaced	AIS
 DIST	Distance	AIS
 DIV	Diversion, Divert, Diverting	AIS
 DLA	Delay (message type designator)	ICAO/AIP
-DLIC	Data Link Initiation Capability	AIS 
+DLIC	Data Link Initiation Capability	AIS
 DLY	Daily	AIS
 DMC	Direct Maintenance Cost	WATOG
 DME	Distance Measuring Equipment	ICAO/AIP
@@ -497,7 +497,7 @@ FAL	Facilitation of International Air	AIS
 FAP	Final Approach Point	AIP/ICAO
 FARs	Federal Aviation Regulations (Federal Aviation Administration of the USA)	
 FATO	Final approach and take-off area	ICAO/AIP
-FAWP	Final Approach Waypoint	AIS 
+FAWP	Final Approach Waypoint	AIS
 FAX	Facsimile Transmission	AIS
 FBL	Light (used to indicate the intensity of WX phenomena, interference or static reports, eg BL RA = light rain)	AIS
 FC	Funnel Cloud (tornado or water spout)	AIS
@@ -597,7 +597,7 @@ GP	Guiding principles	CAR 1998
 GP	Glide Path	ICAO/AIP
 GP	FLG Group Flashing (number) (used in conjunction with aerodrome lighting)	AIS
 GPI	Glide Path Intercept	AIS
-GPS	Global positioning system (see GNSS) 
+GPS Global positioning system (see GNSS)
 GPWS	Ground proximity warning system	
 GR	Hail	AIS
 GRAD	Minimum Required Climb Gradient	AIS
@@ -683,7 +683,7 @@ IFR	Instrument flight rules	AIS
 IFSD	In-flight Shutdown	ICAO/AIP
 IG	Implementation Group	
 IGA	International general aviation	
-ILS	Instrument Landing System	/AIPICAO
+ILS	Instrument Landing System	ICAO/AIP
 IM	Inner Marker	AIS
 IMC	Instrument meteorological conditions (other than VMC)	AIS
 IMC	Indirect Maintenance Cost	CAR 1988
@@ -697,7 +697,7 @@ INC	In Cloud	AIS
 INCERFA	Uncertainty Phase	AIS
 INFO	Information	AIS
 INOP	Inoperative	AIS
-INP	If not possible	AIS 
+INP	If not possible	AIS
 INPR	In progress	ICAO
 INS	Inertial Navigation System	ICAO
 INSTL	Install, Installed, Installation	AIS
@@ -897,7 +897,7 @@ NANU	Notice Advisory to NavStar Users	AIP
 NAP	Noise Abatement Procedures	
 NAS	National Airspace System	
 NASC	National AIS System Centre	AIS
-NAT	NAVAID Training	AIS 
+NAT	NAVAID Training	AIS
 NAV	Navigation	
 NAVAID	Navigation Aid	AIS
 NAWD	Non-acqueous Wet Developer	AIS
@@ -997,7 +997,7 @@ PANS-OPS	Procedures for Air Navigation Services - Aircraft Operations (<em>ICAO 
 PAPI	Precision Approach Path Indicator	AIS
 PAR	Precision Approach Radar	ICAO
 PARL	Parallel	AIS
-PATC	Precision Approach Terrain Chart (followed by name/title)	AIS 
+PATC	Precision Approach Terrain Chart (followed by name/title)	AIS
 PAX	Passengers	AIS
 PBM	Power Plant Build-Up Manual	AIS
 PC	Personal Computer	AIS
@@ -1097,7 +1097,7 @@ RCLL	Runway Centre Line Lights	AIS
 RCLM	Runway Centre Line Marking	AIS
 RDL	Radial	AIS
 RDO	Radio	AIS
-RE...	Recent (used to qualify weather phenomena, eg RERA = recent rain)	CASA 
+RE...	Recent (used to qualify weather phenomena, eg RERA = recent rain)	CASA
 REC	Receive, Receiver, Received	AIS
 REDL	Runway Edge Lights	AIS
 REF	Reference to... Refer to...	AIS
@@ -1197,7 +1197,7 @@ SECT	Sector	AIS
 SELCAL	Selective Calling System	AIS
 SER	Service, Servicing, Served	AIS
 SEV	Severe (used eg to qualify icing and turbulence report)	AIS
-SFC	Surface	AIS 
+SFC	Surface	AIS
 SFL	Sequenced Flashing Lights	AIS
 SG	Snow Grains	AIS
 SH...	Showers (followed by RA=rain, SN=snow, PL=ice pellets, GR=hail, GS=small hail and/or snow pellets or combinations thereof, eg, SHRASN = showers of rain and snow)	AIS
@@ -1297,7 +1297,7 @@ TC	Tropical Cyclone	WATOG
 TCAC	Tropical Cyclone Advisory Centre	AIS
 TCAS	Traffic alert and collision avoidance system	CASA
 TCDS	Type certificate data sheet	
-TCH	Threshold Crossing Height	ICAO 
+TCH	Threshold Crossing Height	ICAO
 TCO	Training and Checking Organisation	CASR Part 21
 TCTA	Trans-continental Control Area	AIS
 TCU	Towering Cumulus (met)	
@@ -1397,7 +1397,7 @@ VHF	Very High Frequency (30 to 300 MHZ)
 VHFCOM	Very High Frequency Communications	
 VIA	By way of...	AIS
 VIMD	Maximum Drag Speed	
-VIP	Very Important Person	AIS 
+VIP	Very Important Person	AIS
 VIS	Visibility	
 VLE	Maximum Speed with Landing Gear Extended	AIS
 VLF	Very Low Frequency (3 to 30 KHZ)	AIS
@@ -1476,5 +1476,4 @@ XSEC	Extra Section	AIS
 Y	Yellow	AIS
 YCZ	Yellow Caution Zone	WATOG
 YR	Your/s	AIS
-Z	Coordinated Universal Time (in meteorological messages)	AIS 
-	
+Z	Coordinated Universal Time (in meteorological messages)	AIS
