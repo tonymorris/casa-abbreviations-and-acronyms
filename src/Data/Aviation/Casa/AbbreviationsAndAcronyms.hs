@@ -1,4 +1,11 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Data.Aviation.Casa.AbbreviationsAndAcronyms where
+
+import Control.Lens
 
 data Source =
   AIP
@@ -19,22 +26,33 @@ data Source =
   | OtherSource String
   deriving (Eq, Ord, Show)
 
+makeClassy ''Source
+
 newtype Sources =
   Sources
     [Source]
   deriving (Eq, Ord, Show)
 
+makeWrapped ''Sources
+
 data Acronym =
-  Acronym
-    String
-    String -- Meaning
-    Sources
-  deriving (Eq, Ord, Show)  
+  Acronym {
+    _name ::
+      String
+  , _meaning :: 
+      String
+  , _sources ::
+      Sources
+  } deriving (Eq, Ord, Show)  
+
+makeClassy ''Acronym
 
 newtype Acronyms =
   Acronyms
     [Acronym]
   deriving (Eq, Ord, Show)
+
+makeWrapped ''Acronyms
 
 acronyms ::
   Acronyms
@@ -1520,3 +1538,57 @@ acronyms =
     , Acronym "YR" "Your/s" (Sources [AIS])
     , Acronym "Z" "Coordinated Universal Time (in meteorological messages)" (Sources [AIS])
     ]
+
+class TraverseSource a where
+  _Source ::
+    Traversal' a Source
+
+instance TraverseSource Source where
+  _Source =
+    id
+
+instance TraverseSource Sources where
+  _Source f (Sources a) =
+    Sources <$> traverse f a
+
+instance TraverseSource Acronyms where
+  _Source =
+    _Sources . _Source
+
+class TraverseSources a where
+  _Sources ::
+    Traversal' a Sources
+
+instance TraverseSources Sources where
+  _Sources =
+    id
+
+instance TraverseSources Acronyms where
+  _Sources =
+    _Acronym . sources
+
+instance TraverseSources Source where
+  _Sources =
+    _Source . _Sources
+
+class TraverseAcronym a where
+  _Acronym ::
+    Traversal' a Acronym
+
+instance TraverseAcronym Acronym where
+  _Acronym =
+    id
+    
+instance TraverseAcronym Acronyms where
+  _Acronym f (Acronyms a) =
+    Acronyms <$> traverse f a
+
+allAcronymsNames ::
+  Traversal' Acronyms String
+allAcronymsNames =
+  _Acronym . name
+
+allAcronymsMeanings ::
+  Traversal' Acronyms String
+allAcronymsMeanings =
+  _Acronym . meaning
