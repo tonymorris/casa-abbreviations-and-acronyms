@@ -1,7 +1,5 @@
-{ mkDerivation, base, checkers, containers, fuzzy, hedgehog, lens
-, monoid-subclasses, optparse-applicative, QuickCheck, stdenv
-, tasty, tasty-hedgehog, tasty-hunit, tasty-quickcheck
-, transformers
+{ mkDerivation, base, bytestring, containers, fuzzy, lens
+, monoid-subclasses, optparse-applicative, stdenv, wreq
 }:
 mkDerivation {
   pname = "casa-abbreviations-and-acronyms";
@@ -10,14 +8,10 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    base containers fuzzy lens monoid-subclasses
+    base bytestring containers fuzzy lens monoid-subclasses wreq
   ];
   executableHaskellDepends = [
     base fuzzy lens optparse-applicative
-  ];
-  testHaskellDepends = [
-    base checkers hedgehog lens QuickCheck tasty tasty-hedgehog
-    tasty-hunit tasty-quickcheck transformers
   ];
   homepage = "https://github.com/qfpl/casa-abbreviations-and-acronyms";
   description = "CASA Abbreviations and Acronyms";
