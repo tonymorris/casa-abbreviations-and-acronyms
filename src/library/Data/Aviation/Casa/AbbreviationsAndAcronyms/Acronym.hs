@@ -1,9 +1,21 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym where
+module Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym(
+  Acronym(..)
+, HasAcronym(..)
+, acronymValues
+, allAcronyms
+) where
 
-import Control.Lens
-import Prelude
+import Control.Applicative((<*>))
+import Control.Category((.), id)
+import Control.Lens(Traversal', Lens')
+import Data.Eq(Eq)
+import Data.Functor((<$>), fmap)
+import Data.Ord(Ord)
+import Data.String(String)
+import Prelude(Show)
+
 
 data Acronym =
   Acronym
@@ -44,6 +56,8 @@ instance HasAcronym Acronym where
   source f_a8nL (Acronym x1_a8nM x2_a8nN x3_a8nO)
     = (fmap (\ y1_a8nP -> ((Acronym x1_a8nM) x2_a8nN) y1_a8nP))
         (f_a8nL x3_a8nO)
+
+-- generated
 
 allAcronyms ::
   [Acronym]
