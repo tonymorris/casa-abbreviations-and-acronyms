@@ -12,10 +12,10 @@ import Data.List
 
 data Colour =
   Colour
+    (String -> String) -- heading separator
     (String -> String) -- heading name
     (String -> String) -- heading meaning
     (String -> String) -- heading source
-    (String -> String) -- heading separator
     (String -> String) -- acronym separator
     (String -> String) -- acronym name
     (String -> String) -- acronym meaning
@@ -39,6 +39,13 @@ class HasColour a where
     Lens'
       a
       Colour
+  headingSeparatorColour ::
+    Lens'
+      a
+      (String -> String)
+  {-# INLINE headingSeparatorColour #-}
+  headingSeparatorColour =
+    colour . headingSeparatorColour
   headingNameColour ::
     Lens'
       a
@@ -60,13 +67,6 @@ class HasColour a where
   {-# INLINE headingSourceColour #-}
   headingSourceColour =
     colour . headingSourceColour
-  headingSeparatorColour ::
-    Lens'
-      a
-      (String -> String)
-  {-# INLINE headingSeparatorColour #-}
-  headingSeparatorColour =
-    colour . headingSeparatorColour
   acronymSeparatorColour ::
     Lens'
       a
@@ -99,6 +99,30 @@ class HasColour a where
 instance HasColour Colour where
   colour =
     id
+  headingSeparatorColour
+    f (Colour hc hn hm hs ac an am as) =
+      fmap (\x -> Colour x hn hm hs ac an am as) (f hc)
+  headingNameColour
+    f (Colour hc hn hm hs ac an am as) =
+      fmap (\x -> Colour hc x hm hs ac an am as) (f hn)
+  headingMeaningColour
+    f (Colour hc hn hm hs ac an am as) =
+      fmap (\x -> Colour hc hn x hs ac an am as) (f hm)
+  headingSourceColour
+    f (Colour hc hn hm hs ac an am as) =
+      fmap (\x -> Colour hc hn hm x ac an am as) (f hs)
+  acronymSeparatorColour
+    f (Colour hc hn hm hs ac an am as) =
+      fmap (\x -> Colour hc hn hm hs x an am as) (f ac)
+  acronymNameColour
+    f (Colour hc hn hm hs ac an am as) =
+      fmap (\x -> Colour hc hn hm hs ac x am as) (f an)
+  acronymMeaningColour
+    f (Colour hc hn hm hs ac an am as) =
+      fmap (\x -> Colour hc hn hm hs ac an x as) (f am)
+  acronymSourceColour
+    f (Colour hc hn hm hs ac an am as) =
+      fmap (\x -> Colour hc hn hm hs ac an am x) (f as)
 
 data Config =
   Config
@@ -109,7 +133,7 @@ defaultConfig ::
 defaultConfig =
   Config
     noColour
-    
+
 class HasConfig a where
   config ::
     Lens'
@@ -122,7 +146,9 @@ instance HasConfig Config where
 
 instance HasColour Config where
   colour =
-    config . colour
+    lens
+      (\(Config c) -> c)
+      (\(Config _) c -> Config c)
 
 newtype ConfigReader a =
   ConfigReader
@@ -245,7 +271,7 @@ renderAcronyms ::
   [a]
   -> ConfigReader String
 renderAcronyms as =
-  concat <$> traverse renderAcronym as
+  concat <$> traverse (\x -> (++ "\n") <$> renderAcronym x) as
 
 renderHeaderAcronyms ::
   HasAcronym a =>

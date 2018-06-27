@@ -11,8 +11,9 @@ import Text.Fuzzy(Fuzzy(Fuzzy))
 main ::
   IO ()
 main =
-  let k = searchFuzzyName "BKN" "" "" False
+  let k = searchFuzzyNameMeaningSource "" "" "" False
       kk :: [Acronym]; kk = (\(Fuzzy o r s) -> o) <$> k
       l :: ConfigReader String; l = renderHeaderAcronyms kk
       ll = runConfig l defaultConfig
-  in  putStrLn ll
+  in  do  putStrLn ll
+          writeFile "/tmp/pp" ll
