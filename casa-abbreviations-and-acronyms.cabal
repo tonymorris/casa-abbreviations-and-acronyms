@@ -28,6 +28,7 @@ source-repository      head
 
 library
   exposed-modules:       Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym
+                       , Data.Aviation.Casa.AbbreviationsAndAcronyms.Search
                        
   build-depends:         base              >= 4.8     && < 4.11
                        , lens              >= 4.15    && < 4.17
