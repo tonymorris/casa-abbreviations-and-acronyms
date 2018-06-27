@@ -1,32 +1,52 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Data.Aviation.Casa.AbbreviationsAndAcronyms.Search where
+module Data.Aviation.Casa.AbbreviationsAndAcronyms.Search(
+  all_Acronym_name_index
+, all_Acronym_meaning_index
+, all_Acronym_source_index
+, searchIndexName
+, searchIndexMeaning
+, searchIndexSource
+, searchFuzzyName
+, searchFuzzyMeaning
+, searchFuzzySource
+, searchFuzzyNameMeaning
+, searchFuzzyNameSource
+, searchFuzzyMeaningSource
+, searchFuzzyNameMeaningSource
+) where
 
-import Control.Lens
-import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym
-import Data.Char
+import Control.Category((.))
+import Control.Lens((^.))
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym(Acronym(Acronym), allAcronyms, name, meaning, source)
+import Data.Bool(Bool)
+import Data.Char(isAlpha, toUpper)
 import Data.Foldable(foldl')
+import Data.Function(($))
+import Data.Functor((<$>), fmap)
 import Data.List(sortBy, filter)
 import Data.Map(Map)
 import qualified Data.Map as Map(fromList, lookup, insertWith, toList)
-import Prelude
+import Data.Maybe(Maybe)
 import Data.Monoid.Textual(TextualMonoid)
+import Data.Ord(Ord((>)), compare)
+import Data.String(String)
 import qualified Text.Fuzzy as Fuzzy(filter, score)
 import Text.Fuzzy(Fuzzy(Fuzzy))
 
-all_Acronym_names_index ::
+all_Acronym_name_index ::
   Map String (String, String)
-all_Acronym_names_index =
+all_Acronym_name_index =
   Map.fromList ((\(Acronym _name _meaning _src) -> (_name, (_meaning, _src))) <$> allAcronyms)
 
-all_Acronym_meanings_index ::
+all_Acronym_meaning_index ::
   Map String (String, String)
-all_Acronym_meanings_index =
+all_Acronym_meaning_index =
   Map.fromList ((\(Acronym _name _meaning _src) -> (_meaning, (_name, _src))) <$> allAcronyms)
 
-all_Acronym_sources_index ::
+all_Acronym_source_index ::
   Map String (String, String)
-all_Acronym_sources_index =
+all_Acronym_source_index =
   Map.fromList ((\(Acronym _name _meaning _src) -> (_src, (_name, _meaning))) <$> allAcronyms)
 
 searchIndexName ::
@@ -34,21 +54,21 @@ searchIndexName ::
   -> Maybe Acronym
 searchIndexName s =
   let s' = filter isAlpha . fmap toUpper $ s
-  in  (\(_meaning, _src) -> Acronym s _meaning _src) <$> Map.lookup s' all_Acronym_names_index
+  in  (\(_meaning, _src) -> Acronym s _meaning _src) <$> Map.lookup s' all_Acronym_name_index
 
 searchIndexMeaning ::
   String
   -> Maybe Acronym
 searchIndexMeaning s =
   let s' = filter isAlpha . fmap toUpper $ s
-  in  (\(_name, _src) -> Acronym _name s _src) <$> Map.lookup s' all_Acronym_meanings_index
+  in  (\(_name, _src) -> Acronym _name s _src) <$> Map.lookup s' all_Acronym_meaning_index
 
 searchIndexSource ::
   String
   -> Maybe Acronym
 searchIndexSource s =
   let s' = filter isAlpha . fmap toUpper $ s
-  in  (\(_name, _meaning) -> Acronym s _name _meaning) <$> Map.lookup s' all_Acronym_sources_index
+  in  (\(_name, _meaning) -> Acronym s _name _meaning) <$> Map.lookup s' all_Acronym_source_index
 
 searchFuzzyName ::
   String
