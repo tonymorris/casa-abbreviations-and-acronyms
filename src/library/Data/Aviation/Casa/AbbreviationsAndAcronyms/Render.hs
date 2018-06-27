@@ -9,130 +9,280 @@ import Control.Lens
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym
 import Prelude
 import Data.List
+import Data.Semigroup
 
-data Colour =
-  Colour
+data Transforms =
+  Transforms
     (String -> String) -- heading separator
     (String -> String) -- heading name
     (String -> String) -- heading meaning
     (String -> String) -- heading source
+    (String -> String) -- heading score
     (String -> String) -- acronym separator
     (String -> String) -- acronym name
     (String -> String) -- acronym meaning
     (String -> String) -- acronym source
+    (String -> String) -- acronym score
 
-noColour ::
-  Colour
-noColour =
-  Colour
-    id
-    id
-    id
-    id
-    id
-    id
-    id
-    id
+mkTransforms ::
+  (String -> String)
+  -> Transforms
+mkTransforms k =
+  Transforms
+    k
+    k
+    k
+    k
+    k
+    k
+    k
+    k
+    k
+    k
 
-class HasColour a where
-  colour ::
-    Lens'
-      a
-      Colour
-  headingSeparatorColour ::
-    Lens'
-      a
-      (String -> String)
-  {-# INLINE headingSeparatorColour #-}
-  headingSeparatorColour =
-    colour . headingSeparatorColour
-  headingNameColour ::
-    Lens'
-      a
-      (String -> String)
-  {-# INLINE headingNameColour #-}
-  headingNameColour =
-    colour . headingNameColour
-  headingMeaningColour ::
-    Lens'
-      a
-      (String -> String)
-  {-# INLINE headingMeaningColour #-}
-  headingMeaningColour =
-    colour . headingMeaningColour
-  headingSourceColour ::
-    Lens'
-      a
-      (String -> String)
-  {-# INLINE headingSourceColour #-}
-  headingSourceColour =
-    colour . headingSourceColour
-  acronymSeparatorColour ::
-    Lens'
-      a
-      (String -> String)
-  {-# INLINE acronymSeparatorColour #-}
-  acronymSeparatorColour =
-    colour . acronymSeparatorColour
-  acronymNameColour ::
-    Lens'
-      a
-      (String -> String)
-  {-# INLINE acronymNameColour #-}
-  acronymNameColour =
-    colour . acronymNameColour
-  acronymMeaningColour ::
-    Lens'
-      a
-      (String -> String)
-  {-# INLINE acronymMeaningColour #-}
-  acronymMeaningColour =
-    colour . acronymMeaningColour
-  acronymSourceColour ::
-    Lens'
-      a
-      (String -> String)
-  {-# INLINE acronymSourceColour #-}
-  acronymSourceColour =
-    colour . acronymSourceColour
+traverseAllTransforms ::
+  Traversal'
+    Transforms
+    (String -> String)
+traverseAllTransforms f (Transforms hc hn hm hs hr ac an am as ar) =
+  Transforms <$> f hc <*> f hn <*> f hm <*> f hs <*> f hr <*> f ac <*> f an <*> f am <*> f as <*> f ar
 
-instance HasColour Colour where
-  colour =
+traverseSeparatorTransforms ::
+  Traversal'
+    Transforms
+    (String -> String)
+traverseSeparatorTransforms f (Transforms hc hn hm hs hr ac an am as ar) =
+  Transforms <$> f hc <*> pure hn <*> pure hm <*> pure hs <*> pure hr <*> f ac <*> pure an <*> pure am <*> pure as <*> pure ar
+
+traverseNameTransforms ::
+  Traversal'
+    Transforms
+    (String -> String)
+traverseNameTransforms f (Transforms hc hn hm hs hr ac an am as ar) =
+  Transforms <$> pure hc <*> f hn <*> pure hm <*> pure hs <*> pure hr <*> pure ac <*> f an <*> pure am <*> pure as <*> pure ar
+
+traverseMeaningTransforms ::
+  Traversal'
+    Transforms
+    (String -> String)
+traverseMeaningTransforms f (Transforms hc hn hm hs hr ac an am as ar) =
+  Transforms <$> pure hc <*> pure hn <*> f hm <*> pure hs <*> pure hr <*> pure ac <*> pure an <*> f am <*> pure as <*> pure ar
+
+traverseSourceTransforms ::
+  Traversal'
+    Transforms
+    (String -> String)
+traverseSourceTransforms f (Transforms hc hn hm hs hr ac an am as ar) =
+  Transforms <$> pure hc <*> pure hn <*> pure hm <*> f hs <*> pure hr <*> pure ac <*> pure an <*> pure am <*> f as <*> pure ar
+
+traverseScoreTransforms ::
+  Traversal'
+    Transforms
+    (String -> String)
+traverseScoreTransforms f (Transforms hc hn hm hs hr ac an am as ar) =
+  Transforms <$> pure hc <*> pure hn <*> pure hm <*> pure hs <*> f hr <*> pure ac <*> pure an <*> pure am <*> pure as <*> f ar
+
+traverseHeadingTransforms ::
+  Traversal'
+    Transforms
+    (String -> String)
+traverseHeadingTransforms f (Transforms hc hn hm hs hr ac an am as ar) =
+  Transforms <$> f hc <*> f hn <*> f hm <*> f hs <*> f hr <*> pure ac <*> pure an <*> pure am <*> pure as <*> pure ar
+
+traverseAcronymTransforms ::
+  Traversal'
+    Transforms
+    (String -> String)
+traverseAcronymTransforms f (Transforms hc hn hm hs hr ac an am as ar) =
+  Transforms <$> pure hc <*> pure hn <*> pure hm <*> pure hs <*> pure hr <*> f ac <*> f an <*> f am <*> f as <*> f ar
+
+instance Semigroup Transforms where
+  Transforms hc1 hn1 hm1 hs1 hr1 ac1 an1 am1 as1 ar1 <> Transforms hc2 hn2 hm2 hs2 hr2 ac2 an2 am2 as2 ar2 =
+    Transforms (hc1 . hc2) (hn1 . hn2) (hm1 . hm2) (hs1 . hs2) (hr1 . hr2) (ac1 . ac2) (an1 . an2) (am1 . am2) (as1 . as2) (ar1 . ar2)
+
+instance Monoid Transforms where
+  mappend =
+    (<>)
+  mempty =
+    Transforms
+      id
+      id
+      id
+      id
+      id
+      id
+      id
+      id
+      id
+      id
+      
+class HasTransforms a where
+  transforms ::
+    Lens'
+      a
+      Transforms
+  headingSeparatorTransforms ::
+    Lens'
+      a
+      (String -> String)
+  {-# INLINE headingSeparatorTransforms #-}
+  headingSeparatorTransforms =
+    transforms . headingSeparatorTransforms
+  headingNameTransforms ::
+    Lens'
+      a
+      (String -> String)
+  {-# INLINE headingNameTransforms #-}
+  headingNameTransforms =
+    transforms . headingNameTransforms
+  headingMeaningTransforms ::
+    Lens'
+      a
+      (String -> String)
+  {-# INLINE headingMeaningTransforms #-}
+  headingMeaningTransforms =
+    transforms . headingMeaningTransforms
+  headingSourceTransforms ::
+    Lens'
+      a
+      (String -> String)
+  {-# INLINE headingSourceTransforms #-}
+  headingSourceTransforms =
+    transforms . headingSourceTransforms
+  headingScoreTransforms ::
+    Lens'
+      a
+      (String -> String)
+  {-# INLINE headingScoreTransforms #-}
+  headingScoreTransforms =
+    transforms . headingScoreTransforms
+  acronymSeparatorTransforms ::
+    Lens'
+      a
+      (String -> String)
+  {-# INLINE acronymSeparatorTransforms #-}
+  acronymSeparatorTransforms =
+    transforms . acronymSeparatorTransforms
+  acronymNameTransforms ::
+    Lens'
+      a
+      (String -> String)
+  {-# INLINE acronymNameTransforms #-}
+  acronymNameTransforms =
+    transforms . acronymNameTransforms
+  acronymMeaningTransforms ::
+    Lens'
+      a
+      (String -> String)
+  {-# INLINE acronymMeaningTransforms #-}
+  acronymMeaningTransforms =
+    transforms . acronymMeaningTransforms
+  acronymSourceTransforms ::
+    Lens'
+      a
+      (String -> String)
+  {-# INLINE acronymSourceTransforms #-}
+  acronymSourceTransforms =
+    transforms . acronymSourceTransforms
+  acronymScoreTransforms ::
+    Lens'
+      a
+      (String -> String)
+  {-# INLINE acronymScoreTransforms #-}
+  acronymScoreTransforms =
+    transforms . acronymScoreTransforms
+
+instance HasTransforms Transforms where
+  transforms =
     id
-  headingSeparatorColour
-    f (Colour hc hn hm hs ac an am as) =
-      fmap (\x -> Colour x hn hm hs ac an am as) (f hc)
-  headingNameColour
-    f (Colour hc hn hm hs ac an am as) =
-      fmap (\x -> Colour hc x hm hs ac an am as) (f hn)
-  headingMeaningColour
-    f (Colour hc hn hm hs ac an am as) =
-      fmap (\x -> Colour hc hn x hs ac an am as) (f hm)
-  headingSourceColour
-    f (Colour hc hn hm hs ac an am as) =
-      fmap (\x -> Colour hc hn hm x ac an am as) (f hs)
-  acronymSeparatorColour
-    f (Colour hc hn hm hs ac an am as) =
-      fmap (\x -> Colour hc hn hm hs x an am as) (f ac)
-  acronymNameColour
-    f (Colour hc hn hm hs ac an am as) =
-      fmap (\x -> Colour hc hn hm hs ac x am as) (f an)
-  acronymMeaningColour
-    f (Colour hc hn hm hs ac an am as) =
-      fmap (\x -> Colour hc hn hm hs ac an x as) (f am)
-  acronymSourceColour
-    f (Colour hc hn hm hs ac an am as) =
-      fmap (\x -> Colour hc hn hm hs ac an am x) (f as)
+  headingSeparatorTransforms
+    f (Transforms hc hn hm hs hr ac an am as ar) =
+      fmap (\x -> Transforms x hn hm hs hr ac an am as ar) (f hc)
+  headingNameTransforms
+    f (Transforms hc hn hm hs hr ac an am as ar) =
+      fmap (\x -> Transforms hc x hm hs hr ac an am as ar) (f hn)
+  headingMeaningTransforms
+    f (Transforms hc hn hm hs hr ac an am as ar) =
+      fmap (\x -> Transforms hc hn x hs hr ac an am as ar) (f hm)
+  headingSourceTransforms
+    f (Transforms hc hn hm hs hr ac an am as ar) =
+      fmap (\x -> Transforms hc hn hm x hr ac an am as ar) (f hs)
+  headingScoreTransforms
+    f (Transforms hc hn hm hs hr ac an am as ar) =
+      fmap (\x -> Transforms hc hn hm hs x ac an am as ar) (f hr)
+  acronymSeparatorTransforms
+    f (Transforms hc hn hm hs hr ac an am as ar) =
+      fmap (\x -> Transforms hc hn hm hs hr x an am as ar) (f ac)
+  acronymNameTransforms
+    f (Transforms hc hn hm hs hr ac an am as ar) =
+      fmap (\x -> Transforms hc hn hm hs hr ac x am as ar) (f an)
+  acronymMeaningTransforms
+    f (Transforms hc hn hm hs hr ac an am as ar) =
+      fmap (\x -> Transforms hc hn hm hs hr ac an x as ar) (f am)
+  acronymSourceTransforms
+    f (Transforms hc hn hm hs hr ac an am as ar) =
+      fmap (\x -> Transforms hc hn hm hs hr ac an am x ar) (f as)
+  acronymScoreTransforms
+    f (Transforms hc hn hm hs hr ac an am as ar) =
+      fmap (\x -> Transforms hc hn hm hs hr ac an am as x) (f ar)
 
+spaceAllTransforms ::
+  Int
+  -> Transforms
+spaceAllTransforms n =
+  mempty & traverseAllTransforms .~ spaceN n
+
+spaceSeparatorTransforms ::
+  Int
+  -> Transforms
+spaceSeparatorTransforms n =
+  mempty & traverseSeparatorTransforms .~ spaceN n
+  
+spaceNameTransforms ::
+  Int
+  -> Transforms
+spaceNameTransforms n =
+  mempty & traverseNameTransforms .~ spaceN n
+  
+spaceMeaningTransforms ::
+  Int
+  -> Transforms
+spaceMeaningTransforms n =
+  mempty & traverseMeaningTransforms .~ spaceN n
+  
+spaceSourceTransforms ::
+  Int
+  -> Transforms
+spaceSourceTransforms n =
+  mempty & traverseSourceTransforms .~ spaceN n
+  
+spaceScoreTransforms ::
+  Int
+  -> Transforms
+spaceScoreTransforms n =
+  mempty & traverseScoreTransforms .~ spaceN n
+  
+spaceHeadingTransforms ::
+  Int
+  -> Transforms
+spaceHeadingTransforms n =
+  mempty & traverseHeadingTransforms .~ spaceN n
+  
+spaceAcronymTransforms ::
+  Int
+  -> Transforms
+spaceAcronymTransforms n =
+  mempty & traverseAcronymTransforms .~ spaceN n
+  
 data Config =
   Config
-    Colour
+    Transforms
 
 defaultConfig ::
   Config
 defaultConfig =
   Config
-    noColour
+    mempty
 
 class HasConfig a where
   config ::
@@ -144,8 +294,8 @@ instance HasConfig Config where
   config =
     id
 
-instance HasColour Config where
-  colour =
+instance HasTransforms Config where
+  transforms =
     lens
       (\(Config c) -> c)
       (\(Config _) c -> Config c)
@@ -184,64 +334,64 @@ instance Monad ConfigReader where
   ConfigReader a >>= f =
     ConfigReader (\x -> runConfig (f (a x)) x)
 
-readColour ::
-  ConfigReader Colour
-readColour =
+readTransforms ::
+  ConfigReader Transforms
+readTransforms =
   ConfigReader
-    (^. colour)
+    (^. transforms)
 
-readHeadingNameColour ::
+readHeadingNameTransforms ::
   ConfigReader (String -> String)
-readHeadingNameColour =
-  (^. headingNameColour) <$> readColour
+readHeadingNameTransforms =
+  (^. headingNameTransforms) <$> readTransforms
 
-readHeadingMeaningColour ::
+readHeadingMeaningTransforms ::
   ConfigReader (String -> String)
-readHeadingMeaningColour =
-  (^. headingMeaningColour) <$> readColour
+readHeadingMeaningTransforms =
+  (^. headingMeaningTransforms) <$> readTransforms
 
-readHeadingSourceColour ::
+readHeadingSourceTransforms ::
   ConfigReader (String -> String)
-readHeadingSourceColour =
-  (^. headingSourceColour) <$> readColour
+readHeadingSourceTransforms =
+  (^. headingSourceTransforms) <$> readTransforms
 
-readHeadingSeparatorColour ::
+readHeadingSeparatorTransforms ::
   ConfigReader (String -> String)
-readHeadingSeparatorColour =
-  (^. headingSeparatorColour) <$> readColour
+readHeadingSeparatorTransforms =
+  (^. headingSeparatorTransforms) <$> readTransforms
 
-readAcronymSeparatorColour ::
+readAcronymSeparatorTransforms ::
   ConfigReader (String -> String)
-readAcronymSeparatorColour =
-  (^. acronymSeparatorColour) <$> readColour
+readAcronymSeparatorTransforms =
+  (^. acronymSeparatorTransforms) <$> readTransforms
 
-readAcronymNameColour ::
+readAcronymNameTransforms ::
   ConfigReader (String -> String)
-readAcronymNameColour =
-  (^. acronymNameColour) <$> readColour
+readAcronymNameTransforms =
+  (^. acronymNameTransforms) <$> readTransforms
 
-readAcronymMeaningColour ::
+readAcronymMeaningTransforms ::
   ConfigReader (String -> String)
-readAcronymMeaningColour =
-  (^. acronymMeaningColour) <$> readColour
+readAcronymMeaningTransforms =
+  (^. acronymMeaningTransforms) <$> readTransforms
 
-readAcronymSourceColour ::
+readAcronymSourceTransforms ::
   ConfigReader (String -> String)
-readAcronymSourceColour =
-  (^. acronymSourceColour) <$> readColour
+readAcronymSourceTransforms =
+  (^. acronymSourceTransforms) <$> readTransforms
 
 renderHeader ::
   ConfigReader String
 renderHeader =
-  do  hc <- readHeadingSeparatorColour
-      hn <- readHeadingNameColour
-      hm <- readHeadingMeaningColour
-      hs <- readHeadingSourceColour
+  do  hc <- readHeadingSeparatorTransforms
+      hn <- readHeadingNameTransforms
+      hm <- readHeadingMeaningTransforms
+      hs <- readHeadingSourceTransforms
       pure . intercalate (hc " ") $
         [
-          hn (mkN 8 "ACRONYM")
-        , hm (mkN 32 "MEANING")
-        , hs (mkN 15 "SOURCE")
+          hn (spaceN 14 "ACRONYM")
+        , hm (spaceN 207 "MEANING")
+        , hs (spaceN 39 "SOURCE")
         ]
 
 renderAcronym ::
@@ -250,20 +400,20 @@ renderAcronym ::
   -> ConfigReader String
 renderAcronym a =
   let name' =
-        a ^. name
+        escapeChars (a ^. name)
       meaning' =
-        a ^. meaning
+        escapeChars (a ^. meaning)
       source' =
-        a ^. source
-  in  do  sc <- readAcronymSeparatorColour
-          an <- readAcronymNameColour
-          am <- readAcronymMeaningColour
-          as <- readAcronymSourceColour
+        escapeChars (a ^. source)
+  in  do  sc <- readAcronymSeparatorTransforms
+          an <- readAcronymNameTransforms
+          am <- readAcronymMeaningTransforms
+          as <- readAcronymSourceTransforms
           pure . intercalate (sc " ") $
             [
-              an (mkN 8 name')
-            , am (mkN 32 meaning')
-            , as (mkN 15 source')
+              an (spaceN 14 name')
+            , am (spaceN 207 meaning')
+            , as (spaceN 39 source')
             ]
 
 renderAcronyms ::
@@ -282,10 +432,28 @@ renderHeaderAcronyms as =
       a <- renderAcronyms as
       pure (h ++ "\n" ++ a)
 
-mkN ::
+spaceN ::
   Int
   -> String
   -> String
-mkN n x =
-  let n' = n - length (take n x)
-  in  x ++ replicate n' ' '
+spaceN n x =
+  let n' = n - length x
+  in  take n x ++ replicate n' ' '
+
+escapeChars ::
+  String
+  -> String
+escapeChars =
+  transform
+    (\x ->  case x of
+              '&':'l':'t':';':r ->
+                '<':r
+              '&':'g':'t':';':r ->
+                '>':r
+              '&':'a':'m':'p':';':r ->
+                '&':r
+              '&':'q':'u':'o':'t':';':r ->
+                '"':r
+              _ ->
+                x
+              )
