@@ -5,11 +5,16 @@
 
 module Data.Aviation.Casa.AbbreviationsAndAcronyms.Render where
 
-import Control.Lens
+import Control.Lens hiding ((<|))
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym
 import Prelude
+import Data.Foldable
 import Data.List
+import Data.List.NonEmpty(NonEmpty((:|)), (<|))
 import Data.Semigroup
+import Data.Monoid.Textual(TextualMonoid)
+import qualified Text.Fuzzy as Fuzzy(filter, score, original)
+import Text.Fuzzy(Fuzzy(Fuzzy))
 
 data Transforms =
   Transforms
@@ -277,28 +282,40 @@ spaceAcronymTransforms n =
 data Config =
   Config
     Transforms
+    (Maybe Int)
 
 defaultConfig ::
   Config
 defaultConfig =
   Config
     mempty
+    Nothing
 
 class HasConfig a where
   config ::
     Lens'
       a
       Config
+  maximumMeaningWidth ::
+    Lens'
+      a
+      (Maybe Int)
+  {-# INLINE maximumMeaningWidth #-}
+  maximumMeaningWidth =
+    config . maximumMeaningWidth
 
 instance HasConfig Config where
   config =
     id
+  maximumMeaningWidth
+    f (Config t m) =
+      fmap (\x -> Config t x) (f m)
 
 instance HasTransforms Config where
   transforms =
     lens
-      (\(Config c) -> c)
-      (\(Config _) c -> Config c)
+      (\(Config c _) -> c)
+      (\(Config _ m) c -> Config c m)
 
 newtype ConfigReader a =
   ConfigReader
@@ -340,6 +357,11 @@ readTransforms =
   ConfigReader
     (^. transforms)
 
+readHeadingSeparatorTransforms ::
+  ConfigReader (String -> String)
+readHeadingSeparatorTransforms =
+  (^. headingSeparatorTransforms) <$> readTransforms
+
 readHeadingNameTransforms ::
   ConfigReader (String -> String)
 readHeadingNameTransforms =
@@ -355,10 +377,10 @@ readHeadingSourceTransforms ::
 readHeadingSourceTransforms =
   (^. headingSourceTransforms) <$> readTransforms
 
-readHeadingSeparatorTransforms ::
+readHeadingScoreTransforms ::
   ConfigReader (String -> String)
-readHeadingSeparatorTransforms =
-  (^. headingSeparatorTransforms) <$> readTransforms
+readHeadingScoreTransforms =
+  (^. headingScoreTransforms) <$> readTransforms
 
 readAcronymSeparatorTransforms ::
   ConfigReader (String -> String)
@@ -380,25 +402,56 @@ readAcronymSourceTransforms ::
 readAcronymSourceTransforms =
   (^. acronymSourceTransforms) <$> readTransforms
 
+readAcronymScoreTransforms ::
+  ConfigReader (String -> String)
+readAcronymScoreTransforms =
+  (^. acronymScoreTransforms) <$> readTransforms
+
+readMaximumMeaningWidth ::
+  ConfigReader (Maybe Int)
+readMaximumMeaningWidth =
+  ConfigReader
+    (^. maximumMeaningWidth)
+
+data Spacing =
+  Spacing
+    Int
+    Int
+    Int
+    Int
+    Int
+  deriving (Eq, Ord, Show)
+
 renderHeader ::
-  ConfigReader String
-renderHeader =
+  Spacing
+  -> ConfigReader String
+renderHeader (Spacing shc shn shm shs shr) =
   do  hc <- readHeadingSeparatorTransforms
       hn <- readHeadingNameTransforms
       hm <- readHeadingMeaningTransforms
       hs <- readHeadingSourceTransforms
-      pure . intercalate (hc " ") $
+      hr <- readHeadingScoreTransforms
+      mn <- readMaximumMeaningWidth
+      let mnw =
+            case mn of
+              Nothing ->
+                shm
+              Just mx ->
+                mx
+      pure . intercalate (hc (replicate shc ' ')) $
         [
-          hn (spaceN 14 "ACRONYM")
-        , hm (spaceN 207 "MEANING")
-        , hs (spaceN 39 "SOURCE")
+          hn (spaceN shn "ACRONYM")
+        , hm (spaceN mnw "MEANING")
+        , hs (spaceN shs "SOURCE")
+        , hr (spaceN shr "SCORE")
         ]
 
 renderAcronym ::
   HasAcronym a =>
   a
+  -> Spacing
   -> ConfigReader String
-renderAcronym a =
+renderAcronym a (Spacing shc shn shm shs shr) =
   let name' =
         escapeChars (a ^. name)
       meaning' =
@@ -409,28 +462,79 @@ renderAcronym a =
           an <- readAcronymNameTransforms
           am <- readAcronymMeaningTransforms
           as <- readAcronymSourceTransforms
-          pure . intercalate (sc " ") $
-            [
-              an (spaceN 14 name')
-            , am (spaceN 207 meaning')
-            , as (spaceN 39 source')
-            ]
+          hr <- readHeadingScoreTransforms          
+          mn <- readMaximumMeaningWidth
+          let mnw =
+                case mn of
+                  Nothing ->
+                    shm
+                  Just mx ->
+                    mx
+          pure . concatMap (spaceN mnw) . toList $ splitEvery mnw meaning' & nelHead %~ (\mg ->
+            intercalate (sc (replicate shc ' ')) $
+              [
+                an name'
+              , am mg
+              , as source'
+              ])
 
 renderAcronyms ::
-  HasAcronym a =>
-  [a]
+  (Traversable t, HasAcronym a) =>
+  t a
+  -> Spacing
   -> ConfigReader String
-renderAcronyms as =
-  concat <$> traverse (\x -> (++ "\n") <$> renderAcronym x) as
+renderAcronyms as sp =
+  concat <$> traverse (\x -> (++ "\n") <$> renderAcronym x sp) as
 
 renderHeaderAcronyms ::
-  HasAcronym a =>
-  [a]
+  (Traversable t, HasAcronym a) =>
+  t a
+  -> Spacing
   -> ConfigReader String
-renderHeaderAcronyms as =
-  do  h <- renderHeader
-      a <- renderAcronyms as
+renderHeaderAcronyms as sp =
+  do  h <- renderHeader sp
+      a <- renderAcronyms as sp
       pure (h ++ "\n" ++ a)
+
+defaultSpaces ::
+  Foldable t =>
+  (a -> t b)
+  -> [a]
+  -> Int
+defaultSpaces k a =
+  case (length . k) <$> a of
+    [] ->
+      0
+    r@(_:_) ->
+      maximum r
+
+spacesName ::
+  TextualMonoid s =>
+  [Fuzzy Acronym s]
+  -> Transforms
+spacesName =
+  spaceNameTransforms . defaultSpaces (\x -> Fuzzy.original x ^. name)
+
+spacesMeaning ::
+  TextualMonoid s =>
+  [Fuzzy Acronym s]
+  -> Transforms
+spacesMeaning =
+  spaceMeaningTransforms . defaultSpaces (\x -> Fuzzy.original x ^. meaning)
+
+spacesSource ::
+  TextualMonoid s =>
+  [Fuzzy Acronym s]
+  -> Transforms
+spacesSource =
+  spaceSourceTransforms . defaultSpaces (\x -> Fuzzy.original x ^. source)
+
+spacesScore ::
+  TextualMonoid s =>
+  [Fuzzy Acronym s]
+  -> Transforms
+spacesScore =
+  spaceSourceTransforms . defaultSpaces (show . Fuzzy.score)
 
 spaceN ::
   Int
@@ -457,3 +561,54 @@ escapeChars =
               _ ->
                 x
               )
+
+splitEvery ::
+  Int
+  -> String
+  -> NonEmpty String
+splitEvery w x =
+  let (i, j) = splitAt w x
+      k =
+        case j of
+          [] ->
+            pure
+          _:_ ->
+            (<| splitEvery w j)
+  in  k i
+
+nelHead ::
+  Lens'
+    (NonEmpty a)
+    a
+nelHead =
+  _Wrapped . _1
+
+nelTail ::
+  Lens'
+    (NonEmpty a)
+    [a]
+nelTail =
+  _Wrapped . _2
+
+nelTraverseTail ::
+  Traversal'
+    (NonEmpty a)
+    a
+nelTraverseTail =
+  nelTail . traverse
+
+mid ::
+  (a -> b -> b)
+  -> Maybe a
+  -> b
+  -> b
+mid =
+  maybe id
+
+ormax ::
+  Ord a =>
+  Maybe a
+  -> a
+  -> a
+ormax =
+  mid max
