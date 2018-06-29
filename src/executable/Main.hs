@@ -12,9 +12,8 @@ main ::
   IO ()
 main =
   let k :: [Fuzzy Acronym String]; k = searchFuzzyNameMeaningSource "BKN" "" "" False
-      l = renderAcronyms k
-      c = defaultConfig
-      m = runConfig l c
+      l = renderHeaderAcronyms k
+      m = runConfig l standardConfig
   in  do  putStrLn m
           writeFile "/tmp/pp" m 
       

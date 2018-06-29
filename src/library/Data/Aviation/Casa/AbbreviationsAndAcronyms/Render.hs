@@ -234,7 +234,7 @@ instance Monoid Spacing where
   mappend =
     (<>)
   mempty =
-    Spacing 1 15 75 25 5 -- todo
+    Spacing 0 0 0 0 0
 
 class HasSpacing a where
   spacing ::
@@ -297,6 +297,34 @@ instance HasSpacing Spacing where
       fmap (\x -> Spacing a b c d x) (f e)
 
 ----
+
+
+standardColours ::
+  Colours
+standardColours =
+  Colours
+    (\s -> "\ESC[37m\ESC[101m" ++ s ++ "\ESC[m")
+    (\s -> "\ESC[37m\ESC[101m" ++ s ++ "\ESC[m")
+    id
+    id
+    id
+    id
+    id
+    id
+    id
+    id
+ 
+standardSpacing ::
+  Spacing
+standardSpacing =
+  Spacing 1 15 75 25 5
+
+standardConfig ::
+  Config
+standardConfig =
+  Config
+    standardColours
+    standardSpacing
 
 data Config =
   Config
@@ -462,7 +490,7 @@ renderHeader =
       shs <- readSourceSpacing
       chr <- readHeadingScoreColours
       shr <- readScoreSpacing
-      pure . intercalate (chc (replicate shc ' ')) $
+      pure . intercalate (chc (replicate shc '|')) $
         [
           chn (spaceN shn "ACRONYM")
         , chm (spaceN shm  "MEANING")
@@ -503,34 +531,34 @@ renderAcronym a =
                 spacesplit shs source'
               score'' =
                 spacesplit shr score'
-              ww ::
+              alignWidth ::
                 Align f =>
                 (String -> String -> a)
-                -> (f String, Int)
-                -> (f String, Int)
+                -> f String
+                -> f String
+                -> String
+                -> String
                 -> f a
-              ww k (m, m') (n, n') =
+              alignWidth k m n ms ns =
                 alignWith
                   (\t -> case t of
-                            This a ->
-                              a `k` replicate n' ' '
-                            That b ->
-                              replicate m' ' ' `k` b
-                            These a b ->
-                              a `k` b)
+                            This a1 ->
+                              a1 `k` ns
+                            That a2 ->
+                              ms `k` a2
+                            These a1 a2 ->
+                              a1 `k` a2)
                   m
                   n
-              
-              spacers a b =
-                a ++ chc (replicate shc ' ') ++ b
-              www =
-                ww spacers (name'', shn) (meaning'', shm)
-              wwww =
-                ww spacers (www, shn + shm) (source'', shs)
-              wwwww :: [String]
-              wwwww =
-                ww spacers (wwww, shn + shm + shs) (score'', shr)
-          pure (newlines wwwww)
+              spacers a1 a2 =
+                a1 ++ chc (replicate shc '|') ++ a2
+              column4 =
+                let column12 =
+                      alignWidth spacers (chn <$> name'') meaning'' (replicate shn ' ') (replicate shm ' ')
+                    column3 =
+                      alignWidth spacers column12 source'' (replicate (shn + shm) ' ') (replicate shs ' ')
+                in  alignWidth spacers column3 score'' (replicate (shn + shm + shs) ' ') (replicate shr ' ')
+          pure (newlines column4)
 
 renderAcronyms ::
   (Traversable t, HasAcronym a, HasScore a) =>
@@ -539,17 +567,15 @@ renderAcronyms ::
 renderAcronyms as =
   concat <$> traverse renderAcronym as
 
-{-
 renderHeaderAcronyms ::
-  (Traversable t, HasAcronym a) =>
+  (Traversable t, HasAcronym a, HasScore a) =>
   t a
-  -> Spacing
   -> ConfigReader String
-renderHeaderAcronyms as sp =
-  do  h <- renderHeader sp
-      a <- renderAcronyms as sp
+renderHeaderAcronyms as=
+  do  h <- renderHeader
+      a <- renderAcronyms as
       pure (h ++ "\n" ++ a)
--}
+
 spaceN ::
   Int
   -> String
