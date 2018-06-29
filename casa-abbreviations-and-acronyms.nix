@@ -1,5 +1,5 @@
 { mkDerivation, base, bytestring, containers, fuzzy, lens
-, monoid-subclasses, optparse-applicative, stdenv, wreq
+, monoid-subclasses, optparse-applicative, stdenv, these, wreq
 }:
 mkDerivation {
   pname = "casa-abbreviations-and-acronyms";
@@ -8,7 +8,7 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    base bytestring containers fuzzy lens monoid-subclasses wreq
+    base bytestring containers fuzzy lens monoid-subclasses these wreq
   ];
   executableHaskellDepends = [
     base fuzzy lens optparse-applicative

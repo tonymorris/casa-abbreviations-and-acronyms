@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym(
   Acronym(..)
@@ -15,7 +16,8 @@ import Data.Functor((<$>), fmap)
 import Data.Ord(Ord)
 import Data.String(String)
 import Prelude(Show)
-
+import Text.Fuzzy(Fuzzy(Fuzzy))
+import Data.Monoid.Textual(TextualMonoid)
 
 data Acronym =
   Acronym
@@ -56,6 +58,12 @@ instance HasAcronym Acronym where
   source f_a8nL (Acronym x1_a8nM x2_a8nN x3_a8nO)
     = (fmap (\ y1_a8nP -> ((Acronym x1_a8nM) x2_a8nN) y1_a8nP))
         (f_a8nL x3_a8nO)
+
+instance TextualMonoid s => HasAcronym (Fuzzy Acronym s) where
+  acronym f (Fuzzy x r s) =
+    fmap
+      (\a -> Fuzzy a r s)
+      (f x)
 
 -- generated
 

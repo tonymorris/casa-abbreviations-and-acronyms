@@ -38,6 +38,7 @@ library
                        , monoid-subclasses >= 0.4     && < 0.5
                        , wreq
                        , bytestring
+                       , these
 
   hs-source-dirs:      src/library
 
