@@ -234,7 +234,7 @@ instance Monoid Spacing where
   mappend =
     (<>)
   mempty =
-    Spacing 0 0 0 0 0
+    Spacing 1 15 75 25 5 -- todo
 
 class HasSpacing a where
   spacing ::
@@ -321,12 +321,12 @@ instance HasConfig Config where
     id
 
 instance HasColours Config where
-  colours =
-    config . colours
+  colours f (Config c s) =
+    fmap (\c' -> Config c' s) (f c)
     
 instance HasSpacing Config where
-  spacing =
-    config . spacing
+  spacing f (Config c s) =
+    fmap (\s' -> Config c s') (f s)
 
 newtype ConfigReader a =
   ConfigReader
@@ -530,14 +530,14 @@ renderAcronym a =
               wwwww :: [String]
               wwwww =
                 ww spacers (wwww, shn + shm + shs) (score'', shr)
-          pure (newlines wwwww)
+          pure (concat wwwww)
 
 renderAcronyms ::
   (Traversable t, HasAcronym a, HasScore a) =>
   t a
   -> ConfigReader String
 renderAcronyms as =
-  concat <$> traverse (\x -> (++ "\n") <$> renderAcronym x) as
+  concat <$> traverse renderAcronym as
 
 {-
 renderHeaderAcronyms ::
