@@ -530,7 +530,7 @@ renderAcronym a =
               wwwww :: [String]
               wwwww =
                 ww spacers (wwww, shn + shm + shs) (score'', shr)
-          pure (concat wwwww)
+          pure (newlines wwwww)
 
 renderAcronyms ::
   (Traversable t, HasAcronym a, HasScore a) =>
