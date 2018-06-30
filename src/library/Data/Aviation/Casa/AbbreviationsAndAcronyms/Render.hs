@@ -303,17 +303,17 @@ standardColours ::
   Colours
 standardColours =
   Colours
-    (\s -> "\ESC[37m\ESC[101m" ++ s ++ "\ESC[m")
-    (\s -> "\ESC[37m\ESC[101m" ++ s ++ "\ESC[m")
-    id
-    id
-    id
-    id
-    id
-    id
-    id
-    id
- 
+    (\s -> "\ESC[32m\ESC[42m" ++ s ++ "\ESC[m")
+    (\s -> "\ESC[37m\ESC[105m" ++ s ++ "\ESC[m")
+    (\s -> "\ESC[37m\ESC[105m" ++ s ++ "\ESC[m")
+    (\s -> "\ESC[37m\ESC[105m" ++ s ++ "\ESC[m")
+    (\s -> "\ESC[37m\ESC[105m" ++ s ++ "\ESC[m")
+    (\s -> "\ESC[32m\ESC[42m" ++ s ++ "\ESC[m")
+    (\s -> "\ESC[37m\ESC[100m" ++ s ++ "\ESC[m")
+    (\s -> "\ESC[37m\ESC[100m" ++ s ++ "\ESC[m")
+    (\s -> "\ESC[37m\ESC[100m" ++ s ++ "\ESC[m")
+    (\s -> "\ESC[37m\ESC[100m" ++ s ++ "\ESC[m")
+    
 standardSpacing ::
   Spacing
 standardSpacing =
@@ -513,15 +513,15 @@ renderAcronym a =
         show (a ^. score)
       spacesplit n x =
         toList $ spaceN n <$> splitEvery n x
-  in  do  chc <- readHeadingSeparatorColours
+  in  do  chc <- readAcronymSeparatorColours
           shc <- readSeparatorSpacing
-          chn <- readHeadingNameColours
+          chn <- readAcronymNameColours
           shn <- readNameSpacing
-          chm <- readHeadingMeaningColours
+          chm <- readAcronymMeaningColours
           shm <- readMeaningSpacing
-          chs <- readHeadingSourceColours
+          chs <- readAcronymSourceColours
           shs <- readSourceSpacing
-          chr <- readHeadingScoreColours
+          chr <- readAcronymScoreColours
           shr <- readScoreSpacing
           let name'' =
                 spacesplit shn name'
@@ -553,11 +553,19 @@ renderAcronym a =
               spacers a1 a2 =
                 a1 ++ chc (replicate shc '|') ++ a2
               column4 =
-                let column12 =
-                      alignWidth spacers (chn <$> name'') meaning'' (replicate shn ' ') (replicate shm ' ')
+                let hn' =
+                      chn (replicate shn ' ')
+                    hm' =
+                      chm (replicate shm ' ')
+                    hs' =
+                      chs (replicate shs ' ')
+                    hr' =
+                      chr (replicate shr ' ')
+                    column12 =
+                      alignWidth spacers (chn <$> name'') (chm <$> meaning'') hn' hm'
                     column3 =
-                      alignWidth spacers column12 source'' (replicate (shn + shm) ' ') (replicate shs ' ')
-                in  alignWidth spacers column3 score'' (replicate (shn + shm + shs) ' ') (replicate shr ' ')
+                      alignWidth spacers column12 (chs <$> source'') (hn' ++ hm') hs'
+                in  alignWidth spacers column3 (chr <$> score'') (hn' ++ hm' ++ hs') hr'
           pure (newlines column4)
 
 renderAcronyms ::
