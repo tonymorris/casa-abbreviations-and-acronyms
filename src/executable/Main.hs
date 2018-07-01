@@ -21,7 +21,10 @@ main =
       m = runConfig l (exactWidthSpacingStandardColours k)
   in  do  putStrLn m
           writeFile "/tmp/pp" m 
-      
+
+-- String -> String -> String -> Bool -> [Fuzzy Acronym String]
+
+
 -- match (any of) name, meaning, source
 -- exact | maybe minimum score
 -- no-colours

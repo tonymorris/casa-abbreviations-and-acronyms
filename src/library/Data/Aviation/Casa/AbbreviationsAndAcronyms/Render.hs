@@ -12,9 +12,9 @@ import Data.Align(Align(alignWith))
 import Data.These(These(This, That, These))
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Config(ConfigReader, readHeadingSeparatorColours, readSeparatorSpacing, readHeadingNameColours, readNameSpacing, readHeadingMeaningColours, readMeaningSpacing, readHeadingSourceColours, readSourceSpacing, readHeadingScoreColours, readScoreSpacing, readAcronymSeparatorColours, readAcronymNameColours, readAcronymMeaningColours, readAcronymSourceColours, readAcronymScoreColours)
-import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Score(HasScore(score))
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Score(HasShowScore(showScore))
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Spacing(nameHeader, meaningHeader, sourceHeader, scoreHeader)
-import Prelude(show, (-))
+import Prelude((-))
 import Data.String(String)
 import Data.Int(Int)
 import Data.Function(($))
@@ -48,7 +48,7 @@ renderHeader =
         ]
 
 renderAcronym ::
-  (HasScore a, HasAcronym a) =>
+  (HasShowScore a, HasAcronym a) =>
   a
   -> ConfigReader String
 renderAcronym a =
@@ -59,7 +59,7 @@ renderAcronym a =
       source' =
         escapeChars (a ^. source)
       score' =
-        show (a ^. score)
+        a ^. showScore
       spacesplit n x =
         toList $ spaceN n <$> splitEvery n x
   in  do  chc <- readAcronymSeparatorColours
@@ -118,14 +118,14 @@ renderAcronym a =
           pure (newlines column4)
 
 renderAcronyms ::
-  (Traversable t, HasAcronym a, HasScore a) =>
+  (Traversable t, HasAcronym a, HasShowScore a) =>
   t a
   -> ConfigReader String
 renderAcronyms as =
   concat <$> traverse renderAcronym as
 
 renderHeaderAcronyms ::
-  (Traversable t, HasAcronym a, HasScore a) =>
+  (Traversable t, HasAcronym a, HasShowScore a) =>
   t a
   -> ConfigReader String
 renderHeaderAcronyms as=
