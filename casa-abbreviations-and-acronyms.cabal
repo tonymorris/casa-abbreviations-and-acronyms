@@ -29,6 +29,10 @@ source-repository      head
 library
   exposed-modules:       Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym
                        , Data.Aviation.Casa.AbbreviationsAndAcronyms.Render
+                       , Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Config
+                       , Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Colours
+                       , Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Score
+                       , Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Spacing
                        , Data.Aviation.Casa.AbbreviationsAndAcronyms.Search
                        
   build-depends:         base              >= 4.8     && < 4.11
