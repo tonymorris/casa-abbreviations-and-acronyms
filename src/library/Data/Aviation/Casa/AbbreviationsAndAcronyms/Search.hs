@@ -7,6 +7,10 @@ module Data.Aviation.Casa.AbbreviationsAndAcronyms.Search(
 , searchIndexName
 , searchIndexMeaning
 , searchIndexSource
+, searchIndexNameSource
+, searchIndexNameMeaning
+, searchIndexMeaningSource
+, searchIndexNameMeaningSource
 , searchFuzzyName
 , searchFuzzyMeaning
 , searchFuzzySource
@@ -16,6 +20,7 @@ module Data.Aviation.Casa.AbbreviationsAndAcronyms.Search(
 , searchFuzzyNameMeaningSource
 ) where
 
+import Control.Applicative((<|>))
 import Control.Category((.))
 import Control.Lens((^.))
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym(Acronym(Acronym), allAcronyms, name, meaning, source)
@@ -70,6 +75,30 @@ searchIndexSource s =
   let s' = filter isAlpha . fmap toUpper $ s
   in  (\(_name, _meaning) -> Acronym s _name _meaning) <$> Map.lookup s' all_Acronym_source_index
 
+searchIndexNameMeaning ::
+  String
+  -> Maybe Acronym
+searchIndexNameMeaning s =
+  searchIndexName s <|> searchIndexMeaning s
+  
+searchIndexNameSource ::
+  String
+  -> Maybe Acronym
+searchIndexNameSource s =
+  searchIndexName s <|> searchIndexSource s
+
+searchIndexMeaningSource ::
+  String
+  -> Maybe Acronym
+searchIndexMeaningSource s =
+  searchIndexMeaning s <|> searchIndexSource s
+
+searchIndexNameMeaningSource ::
+  String
+  -> Maybe Acronym
+searchIndexNameMeaningSource s =
+  searchIndexName s <|> searchIndexMeaning s <|> searchIndexSource s
+  
 searchFuzzyName ::
   String
   -> String

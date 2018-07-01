@@ -35,7 +35,7 @@ import Control.Lens(Rewrapped, Wrapped(_Wrapped'), Unwrapped, Lens', iso, (^.))
 import Control.Monad(Monad(return, (>>=)))
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym(HasAcronym)
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Colours(HasColours(colours), Colours, headingSeparatorColours, headingNameColours, headingMeaningColours, headingSourceColours, headingScoreColours, acronymSeparatorColours, acronymNameColours, acronymMeaningColours, acronymSourceColours, acronymScoreColours, standardColours)
-import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Score(HasScore)
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Score(HasShowScore)
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Spacing(HasSpacing(spacing), Spacing, separatorSpacing, nameSpacing, meaningSpacing, sourceSpacing, scoreSpacing, standardSpacing, exactWidthSpacing)
 import Data.Functor(Functor(fmap), (<$>))
 import Data.Int(Int)
@@ -193,7 +193,7 @@ readScoreSpacing =
   (^. scoreSpacing) <$> readSpacing
 
 exactWidthSpacingStandardColours ::
-  (HasScore a, HasAcronym a) =>
+  (HasShowScore a, HasAcronym a) =>
   [a]
   -> Config  
 exactWidthSpacingStandardColours x =

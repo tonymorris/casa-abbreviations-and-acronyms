@@ -7,24 +7,26 @@ module Data.Aviation.Casa.AbbreviationsAndAcronyms.Render(
 , renderHeaderAcronyms
 ) where
 
-import Control.Lens hiding ((<|))
+
+import Control.Applicative(pure)
+import Control.Category((.))
+import Control.Lens((^.), transform)
+import Control.Monad((>>=))
 import Data.Align(Align(alignWith))
-import Data.These(These(This, That, These))
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Config(ConfigReader, readHeadingSeparatorColours, readSeparatorSpacing, readHeadingNameColours, readNameSpacing, readHeadingMeaningColours, readMeaningSpacing, readHeadingSourceColours, readSourceSpacing, readHeadingScoreColours, readScoreSpacing, readAcronymSeparatorColours, readAcronymNameColours, readAcronymMeaningColours, readAcronymSourceColours, readAcronymScoreColours)
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Score(HasShowScore(showScore))
 import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Spacing(nameHeader, meaningHeader, sourceHeader, scoreHeader)
-import Prelude((-))
-import Data.String(String)
 import Data.Int(Int)
+import Data.Foldable(toList, length)
 import Data.Function(($))
 import Data.Functor((<$>))
-import Control.Applicative(pure)
-import Control.Category((.))
-import Control.Monad((>>=))
-import Data.Foldable(toList, length)
 import Data.List(intercalate, replicate, (++), concat, take, splitAt)
 import Data.List.NonEmpty(NonEmpty, (<|))
+import Data.String(String)
+import Data.These(These(This, That, These))
+import Data.Traversable(Traversable(traverse))
+import Prelude((-))
 
 renderHeader ::
   ConfigReader String

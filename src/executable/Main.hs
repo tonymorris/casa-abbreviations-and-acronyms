@@ -1,64 +1,138 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
 module Main(
   main
 ) where
 
-import Control.Applicative
-import Control.Lens
-import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym
-import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render
-import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Colours
-import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Config
-import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Spacing
-import Data.Aviation.Casa.AbbreviationsAndAcronyms.Search
+import Control.Applicative((<*>), (<**>))
+import Control.Category((.), id)
+import Control.Lens((%~), lens)
+import Data.Bool(bool)
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym(HasAcronym(acronym), Acronym)
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render(renderHeaderAcronyms, renderAcronyms)
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Colours(Colours, standardColours)
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Config(ConfigReader, Config(Config), runConfig)
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Score(HasShowScore(showScore))
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Spacing(nameSpacing, meaningSpacing, sourceSpacing, scoreSpacing, exactWidthSpacing)
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Search(searchFuzzyNameMeaningSource, searchIndexNameMeaningSource, searchFuzzyNameMeaning, searchIndexNameMeaning, searchFuzzyNameSource, searchIndexNameSource, searchFuzzyName, searchIndexName)
+import Data.Bool(Bool(False, True))
+import Data.Eq(Eq)
+import Data.Foldable(foldr)
+import Data.Function(($))
+import Data.Functor((<$>), fmap)
+import Data.Int(Int)
+import Data.List(filter)
+import Data.Maybe(Maybe(Just, Nothing), maybe, maybeToList)
+import Data.Monoid(Monoid(mempty))
+import Data.Ord(Ord((>=), (>)), max, min)
 import Data.Semigroup((<>))
-import qualified Text.Fuzzy as Fuzzy(filter, score)
+import Data.String(String)
+import Data.Traversable(Traversable)
+import Options.Applicative(Parser, execParser, info, helper, fullDesc, header, option, maybeReader, short, long, value, help, switch, strOption)
+import Prelude(Show(show))
+import System.IO(IO, putStrLn)
 import Text.Fuzzy(Fuzzy(Fuzzy))
-import Options.Applicative(Parser, execParser, info, helper, fullDesc, header, option, maybeReader, short, long, value, metavar, help, switch, strOption)
+import Text.Read(reads)
 
 main ::
   IO ()
 main =
-  {-
-  let k :: [Fuzzy Acronym String]; k = searchFuzzyNameMeaningSource "BKN" "" "" False
-      l = renderHeaderAcronyms k
-      m = runConfig l (exactWidthSpacingStandardColours k)
-  in  do  putStrLn m
-          writeFile "/tmp/pp" m 
--}
-
-  let opts =
+  let execopts =
         execParser
-          (info (parserOptions <**> helper) (
+          (info ((parserOptions :: Parser (Options [] ShowAcronym)) <**> helper) (
             fullDesc <>
             header "casa-abbreviations-and-acronyms for searching CASA abbreviations and acronyms <https://www.casa.gov.au/about-us/standard-page/aviation-abbreviations-and-acronyms>"
           )
         )
-  in  let k :: [Fuzzy Acronym String]; k = searchFuzzyNameMeaningSource "BKN" "" "" False
-          l = renderHeaderAcronyms k
-          m = runConfig l (exactWidthSpacingStandardColours k)
-      in  do  putStrLn m
-              putStrLn "===="
-              o <- opts
-              print o
+  in  do  opts <- execopts
+          case opts of
+            Options clrs rndr (MatchField fz ex) typ (FieldSpacing mn xn mm xm ms xs mr xr) term ->
+              let acro =
+                    let match =
+                          case typ of
+                            ExactMatch ->
+                              fmap (\a -> ShowAcronym a "-") . maybeToList . ex
+                            InexactMatch x ->
+                              fmap (\(Fuzzy o _ s) -> ShowAcronym o (show s)) . maybe id (\n -> filter (\(Fuzzy _ _ s) -> s >= n)) x . fz
+                    in  match term
+                  space =
+                    foldr
+                      (\(a, b, c) w ->  let k val func = a %~ maybe id func val
+                                        in  if b > c
+                                              then
+                                                id
+                                              else
+                                                k b max . k c min . w)
+                      id
+                      [
+                        (nameSpacing, mn, xn)
+                      , (meaningSpacing, mm, xm)
+                      , (sourceSpacing, ms, xs)
+                      , (scoreSpacing, mr, xr)
+                      ]
+                  out =
+                    runConfig
+                      (rndr acro)
+                      (space $ Config clrs (exactWidthSpacing acro))
+              in  putStrLn out
+
+data ShowAcronym =
+  ShowAcronym
+    Acronym
+    String -- score
+  deriving (Eq, Ord, Show)
+
+instance HasAcronym ShowAcronym where
+  acronym =
+    lens
+      (\(ShowAcronym a _) -> a)
+      (\(ShowAcronym _ s) a -> ShowAcronym a s)
+      
+instance HasShowScore ShowAcronym where
+  showScore =
+    lens
+      (\(ShowAcronym _ s) -> s)
+      (\(ShowAcronym a _) s -> ShowAcronym a s)
 
 data MatchField =
   MatchField
-    Bool -- name
-    Bool -- meaning
-    Bool -- source
-  deriving (Eq, Ord, Show)
+    (String -> [Fuzzy Acronym String])
+    (String -> Maybe Acronym)
+
+matchField' ::
+  (String -> String -> String -> Bool -> [Fuzzy Acronym String])
+  -> (String -> Maybe Acronym)
+  -> MatchField
+matchField' f g =
+  MatchField (\s -> f s "" "" False) g
 
 parserMatchField ::
   Parser MatchField
 parserMatchField =
-  MatchField <$>
-    switch
-      (
-        long "no-match-name" <>
-        long "nn" <>
-        help "do not match the acronym name"
-      )
-    <*>
+  (
+    \p q -> 
+        case p of
+      False ->
+        case q of
+          False ->
+            matchField'
+              searchFuzzyNameMeaningSource
+              searchIndexNameMeaningSource
+          True ->
+            matchField'
+              searchFuzzyNameMeaning
+              searchIndexNameMeaning
+      True ->
+        case q of
+          False ->
+            matchField'
+              searchFuzzyNameSource
+              searchIndexNameSource
+          True ->
+            matchField'
+              searchFuzzyName
+              searchIndexName
+  ) <$>
     switch
       (
         long "no-match-meaning" <>
@@ -159,33 +233,39 @@ parserFieldSpacing =
         <*>
         minmaxWidth "max-score-width" "xr" "maximum score column width"
         
-data Options =
+data Options t a =
   Options
-    Bool -- no colours
-    Bool -- no header
+    Colours -- no colours
+    (t a -> ConfigReader String) -- no header
     MatchField
     MatchType
     FieldSpacing
-    [String] -- the search term
-  deriving (Eq, Ord, Show)    
-
+    String -- the search term
+  
 parserOptions ::
-  Parser Options
+  (HasShowScore a, HasAcronym a, Traversable t) =>
+  Parser (Options t a)
 parserOptions =
   Options <$>
-    switch
-      (
-        short 'c' <>
-        long "no-colour" <>
-        help "turn off ANSI escape code colours"
-      )
+    (
+      bool standardColours mempty <$>
+      switch
+        (
+          short 'c' <>
+          long "no-colour" <>
+          help "turn off ANSI escape code colours"
+        )
+    )
     <*>
-    switch
-      (
-        short 'h' <>
-        long "no-header" <>
-        help "turn off the header in the output"
-      )
+    (
+      (bool renderHeaderAcronyms renderAcronyms) <$>
+      switch
+        (
+          short 'h' <>
+          long "no-header" <>
+          help "turn off the header in the output"
+        )
+    )
     <*>
     parserMatchField
     <*>
@@ -193,13 +273,9 @@ parserOptions =
     <*>
     parserFieldSpacing
     <*>
-    some
+    strOption
       (
-        strOption
-          (
-            short 't' <>
-            long "term" <>
-            help "the search term"
-          )
+        short 't' <>
+        long "term" <>
+        help "the search term"
       )
-

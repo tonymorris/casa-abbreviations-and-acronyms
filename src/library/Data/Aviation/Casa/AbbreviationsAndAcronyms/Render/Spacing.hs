@@ -15,8 +15,8 @@ module Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Spacing(
 
 import Control.Category((.), id)
 import Control.Lens(Lens', set, (^.))
-import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym
-import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Score
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Acronym(HasAcronym(name, meaning, source))
+import Data.Aviation.Casa.AbbreviationsAndAcronyms.Render.Score(HasShowScore(showScore))
 import Data.Eq(Eq)
 import Data.Foldable(length, foldMap)
 import Data.Function(($))
@@ -25,7 +25,7 @@ import Data.Int(Int)
 import Data.Ord(Ord, max, min)
 import Data.Semigroup
 import Data.String(String)
-import Prelude(Show, show)
+import Prelude(Show)
 
 data Spacing =
   Spacing
@@ -148,7 +148,7 @@ standardSpacing =
     (length scoreHeader)
 
 exactWidthSpacing ::
-  (HasScore a, HasAcronym a) =>
+  (HasShowScore a, HasAcronym a) =>
   [a]
   -> Spacing
 exactWidthSpacing x =
@@ -159,10 +159,10 @@ exactWidthSpacing x =
         set nameSpacing (length (a ^. name)) .
         set meaningSpacing (length (a ^. meaning)) .
         set sourceSpacing (length (a ^. source)) .
-        set scoreSpacing (length (show (a ^. score)))
+        set scoreSpacing (length (a ^. showScore))
         $ mempty
     ) x
-    
+
 (<->) ::
   Spacing
   -> Spacing
