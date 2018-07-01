@@ -13,7 +13,7 @@ main ::
 main =
   let k :: [Fuzzy Acronym String]; k = searchFuzzyNameMeaningSource "BKN" "" "" False
       l = renderHeaderAcronyms k
-      m = runConfig l standardConfig
+      m = runConfig l (minimalSpacingStandardColours k)
   in  do  putStrLn m
           writeFile "/tmp/pp" m 
       

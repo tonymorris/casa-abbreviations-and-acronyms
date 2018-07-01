@@ -228,14 +228,8 @@ data Spacing =
 
 instance Semigroup Spacing where
   Spacing a1 b1 c1 d1 e1 <> Spacing a2 b2 c2 d2 e2 =
-    Spacing (a1 + a2) (b1 + b2) (c1 + c2) (d1 + d2) (e1 + e2)
+    Spacing (a1 `max` a2) (b1 `max` b2) (c1 `max` c2) (d1 `max` d2) (e1 `max` e2)
     
-instance Monoid Spacing where
-  mappend =
-    (<>)
-  mempty =
-    Spacing 0 0 0 0 0
-
 class HasSpacing a where
   spacing ::
     Lens'
@@ -314,29 +308,25 @@ standardColours =
     (\s -> "\ESC[37m\ESC[100m" ++ s ++ "\ESC[m")
     (\s -> "\ESC[37m\ESC[100m" ++ s ++ "\ESC[m")
     
-standardSpacing ::
-  Spacing
-standardSpacing =
-  Spacing 1 15 75 25 5
+minimalSpacing ::
+  (HasScore a, HasAcronym a) =>
+  [a]
+  -> Spacing
+minimalSpacing =
+  foldl' (\a b -> Spacing 1 (length (b ^. name)) (length (b ^. meaning)) (length (b ^. source)) (length (show (b ^. score))) <> a) (Spacing 1 1 1 1 1)
 
-standardConfig ::
-  Config
-standardConfig =
+minimalSpacingStandardColours ::
+  (HasScore a, HasAcronym a) =>
+  [a]
+  -> Config  
+minimalSpacingStandardColours x =
   Config
     standardColours
-    standardSpacing
-
+    (minimalSpacing x)
 data Config =
   Config
     Colours
     Spacing
-
-defaultConfig ::
-  Config
-defaultConfig =
-  Config
-    mempty
-    mempty
 
 class HasConfig a where
   config ::
