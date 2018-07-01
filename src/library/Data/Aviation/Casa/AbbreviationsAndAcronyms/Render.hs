@@ -307,13 +307,30 @@ standardColours =
     (\s -> "\ESC[37m\ESC[100m" ++ s ++ "\ESC[m")
     (\s -> "\ESC[37m\ESC[100m" ++ s ++ "\ESC[m")
     (\s -> "\ESC[37m\ESC[100m" ++ s ++ "\ESC[m")
-    
+
+standardSpacing ::
+  Spacing
+standardSpacing =
+  Spacing
+    1
+    (length nameHeader)
+    (length meaningHeader)
+    (length sourceHeader)
+    (length scoreHeader)
+
+standardConfig ::
+  Config
+standardConfig =
+  Config
+    standardColours
+    standardSpacing
+
 minimalSpacing ::
   (HasScore a, HasAcronym a) =>
   [a]
   -> Spacing
 minimalSpacing =
-  foldl' (\a b -> Spacing 1 (length (b ^. name)) (length (b ^. meaning)) (length (b ^. source)) (length (show (b ^. score))) <> a) (Spacing 1 1 1 1 1)
+  foldl' (\a b -> Spacing 1 (length (b ^. name)) (length (b ^. meaning)) (length (b ^. source)) (length (show (b ^. score))) <> a) standardSpacing
 
 minimalSpacingStandardColours ::
   (HasScore a, HasAcronym a) =>
@@ -467,6 +484,26 @@ readScoreSpacing ::
 readScoreSpacing =
   (^. scoreSpacing) <$> readSpacing
 
+nameHeader ::
+  String
+nameHeader =
+  "NAME"
+
+meaningHeader ::
+  String
+meaningHeader =
+  "MEANING"
+
+sourceHeader ::
+  String
+sourceHeader =
+  "SOURCE"
+
+scoreHeader ::
+  String
+scoreHeader =
+  "SCORE"
+
 renderHeader ::
   ConfigReader String
 renderHeader =
@@ -482,10 +519,10 @@ renderHeader =
       shr <- readScoreSpacing
       pure . intercalate (chc (replicate shc '|')) $
         [
-          chn (spaceN shn "ACRONYM")
-        , chm (spaceN shm  "MEANING")
-        , chs (spaceN shs "SOURCE")
-        , chr (spaceN shr "SCORE")
+          chn (spaceN shn nameHeader)
+        , chm (spaceN shm meaningHeader)
+        , chs (spaceN shs sourceHeader)
+        , chr (spaceN shr scoreHeader)
         ]
 
 renderAcronym ::
