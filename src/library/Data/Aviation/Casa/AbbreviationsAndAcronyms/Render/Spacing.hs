@@ -151,7 +151,8 @@ exactWidthSpacing ::
   (HasScore a, HasAcronym a) =>
   [a]
   -> Spacing
-exactWidthSpacing =
+exactWidthSpacing x =
+  standardSpacing <>
   foldMap
     (
       \a -> 
@@ -160,7 +161,8 @@ exactWidthSpacing =
         set sourceSpacing (length (a ^. source)) .
         set scoreSpacing (length (show (a ^. score)))
         $ mempty
-    )
+    ) x
+    
 (<->) ::
   Spacing
   -> Spacing
